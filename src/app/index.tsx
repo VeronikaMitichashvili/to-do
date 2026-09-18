@@ -1,5 +1,6 @@
 import * as Device from "expo-device";
-import { Button, Platform, ScrollView, StyleSheet } from "react-native";
+import { useState } from "react";
+import { Button, Platform, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AnimatedIcon } from "@/components/animated-icon";
@@ -8,7 +9,6 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { WebBadge } from "@/components/web-badge";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
-import { useState } from "react";
 
 function getDevMenuHint() {
   if (Platform.OS === "web") {
@@ -31,10 +31,19 @@ function getDevMenuHint() {
 
 export default function HomeScreen() {
   const [items, setItems] = useState<string[]>(["Test 1", "Test 2"]);
+  const [text, setText] = useState("");
 
   const addItem = () => {
-    const newItem = `Test ${items.length + 1}`;
-    setItems([...items, newItem]);
+    if (text.trim() === "") {
+      return;
+    }
+
+    setItems([...items, text]);
+    setText("");
+  };
+
+  const deleteItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
   };
 
   return (
@@ -46,20 +55,40 @@ export default function HomeScreen() {
             ToDo List
           </ThemedText>
         </ThemedView>
-        <ThemedView style={styles.heroSection}>
-          <Button title={"Add todo"} onPress={addItem} />
+
+        <ThemedView style={styles.inputSection}>
+          <TextInput
+            style={styles.input}
+            placeholder="Введите задачу"
+            value={text}
+            onChangeText={setText}
+          />
+
+          <Button title="Add todo" onPress={addItem} />
         </ThemedView>
 
         <ThemedText type="code" style={styles.code}>
           Your todos:
         </ThemedText>
+
         <ScrollView style={styles.scrollContainer}>
-          <ThemedView type="backgroundElement" style={styles.stepContainer}>
-            {items.map((item) => (
-              <HintRow key={item} title={item} />
+          <ThemedView
+            type="backgroundElement"
+            style={styles.stepContainer}
+          >
+            {items.map((item, index) => (
+              <View key={index} style={styles.todoRow}>
+                <HintRow title={item} />
+
+                <Button
+                  title="Delete"
+                  onPress={() => deleteItem(index)}
+                />
+              </View>
             ))}
           </ThemedView>
         </ScrollView>
+
         {Platform.OS === "web" && <WebBadge />}
       </SafeAreaView>
     </ThemedView>
@@ -86,6 +115,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     gap: Spacing.four,
   },
+  inputSection: {
+    width: "100%",
+    gap: Spacing.three,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#999",
+    borderRadius: 8,
+    padding: 10,
+    width: "100%",
+  },
   title: {
     textAlign: "center",
   },
@@ -102,5 +142,11 @@ const styles = StyleSheet.create({
     height: 200,
     width: "100%",
     borderRadius: Spacing.four,
+  },
+  todoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.three,
   },
 });
